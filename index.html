@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FlexiProxy Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+<aside class="sidebar">
+
+    <div class="logo">
+        <div class="logo-icon">🛡️</div>
+
+        <div>
+            <h2>FlexiProxy</h2>
+            <span>Smart · Fast · Reliable</span>
+        </div>
+    </div>
+
+    <div class="system-status">
+        <span class="status-dot"></span>
+
+        <div>
+            <strong>System Online</strong>
+            <small id="sidebarTime">Loading...</small>
+        </div>
+    </div>
+
+    <nav class="navigation">
+
+        <button class="nav-item active" data-page="dashboard">
+            <span>⌂</span>
+            Dashboard
+        </button>
+
+        <button class="nav-item" data-page="servers">
+            <span>▣</span>
+            Servers
+        </button>
+
+        <button class="nav-item" data-page="analytics">
+            <span>▥</span>
+            Analytics
+        </button>
+
+        <button class="nav-item" data-page="logs">
+            <span>▤</span>
+            Logs
+        </button>
+
+        <button class="nav-item" data-page="settings">
+            <span>⚙</span>
+            Settings
+        </button>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <div class="connection-box">
+            <span class="connection-dot"></span>
+
+            <div>
+                <small>Backend Connection</small>
+                <strong id="connectionText">Connecting...</strong>
+            </div>
+        </div>
+
+        <div class="sidebar-version">
+            FlexiProxy v1.0
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- ================= MAIN ================= -->
+
+<main class="main-content">
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div>
+            <div class="breadcrumb">
+                FlexiProxy / <span id="pageTitle">Dashboard</span>
+            </div>
+
+            <p id="pageSubtitle">
+                Real-time reverse proxy monitoring
+            </p>
+        </div>
+
+        <div class="clock">
+            ◷ <span id="currentTime">Loading...</span>
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+
+    <section class="page" id="dashboardPage">
+
+        <!-- HERO -->
+
+        <div class="hero-card">
+
+            <div class="hero-content">
+
+                <div class="hero-badge">
+                    ● LIVE SYSTEM
+                </div>
+
+                <h1>
+                    FlexiProxy -
+                    <span>Final Architecture</span>
+                </h1>
+
+                <p>
+                    A High-Throughput Event-Driven Reverse Proxy
+                    with Dynamic Load Balancing and Health Monitoring.
+                </p>
+
+                <div class="hero-actions">
+
+                    <button class="primary-btn" id="trafficBtn">
+                        ▶ Start Live Traffic
+                    </button>
+
+                    <button class="secondary-btn" id="testRequestBtn">
+                        Send Test Request
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="hero-architecture">
+
+                <div class="architecture-node">
+                    <div class="node-icon">👤</div>
+                    <strong>Client</strong>
+                    <small>User Request</small>
+                </div>
+
+                <div class="architecture-arrow">→</div>
+
+                <div class="architecture-node proxy-node">
+                    <div class="node-icon">🛡️</div>
+                    <strong>FlexiProxy</strong>
+                    <small>Port 8080</small>
+                </div>
+
+                <div class="architecture-arrow">→</div>
+
+                <div class="backend-group">
+
+                    <div class="architecture-node small-node">
+                        <div class="node-icon">🖥️</div>
+                        <strong>Server 1</strong>
+                        <small>8001</small>
+                    </div>
+
+                    <div class="architecture-node small-node">
+                        <div class="node-icon">🖥️</div>
+                        <strong>Server 2</strong>
+                        <small>8002</small>
+                    </div>
+
+                    <div class="architecture-node small-node">
+                        <div class="node-icon">🖥️</div>
+                        <strong>Server 3</strong>
+                        <small>8003</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- METRICS -->
+
+        <div class="section-heading">
+            <div>
+                <h2>System Metrics</h2>
+                <p>Real-time proxy performance</p>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+
+            <div class="metric-card">
+
+                <div class="metric-icon blue">⇅</div>
+
+                <div class="metric-info">
+                    <span>Requests / Sec</span>
+                    <strong id="requestsPerSecond">0</strong>
+                    <small>Live traffic</small>
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-icon purple">⚡</div>
+
+                <div class="metric-info">
+                    <span>Active Requests</span>
+                    <strong id="activeRequests">0</strong>
+                    <small>Currently processing</small>
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-icon green">✓</div>
+
+                <div class="metric-info">
+                    <span>Success Rate</span>
+                    <strong id="successRate">100%</strong>
+                    <small>Request reliability</small>
+                </div>
+
+            </div>
+
+
+            <div class="metric-card">
+
+                <div class="metric-icon orange">#</div>
+
+                <div class="metric-info">
+                    <span>Total Requests</span>
+                    <strong id="totalRequests">0</strong>
+                    <small>Since startup</small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- HEALTH + FLOW -->
+
+        <div class="dashboard-grid">
+
+            <div class="dashboard-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>System Health</h3>
+                        <p>Overall resource utilization</p>
+                    </div>
+
+                    <span class="healthy-badge" id="overallHealth">
+                        Healthy
+                    </span>
+
+                </div>
+
+
+                <div class="health-container">
+
+                    <div class="health-item">
+
+                        <div class="health-label">
+                            <span>CPU Usage</span>
+                            <strong id="cpuValue">0%</strong>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="cpuBar"></div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="health-item">
+
+                        <div class="health-label">
+                            <span>Memory Usage</span>
+                            <strong id="ramValue">0%</strong>
+                        </div>
+
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="ramBar"></div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="health-summary">
+
+                        <div class="server-count">
+                            <strong id="serverHealthCount">0</strong>
+                            <span>Healthy Servers</span>
+                        </div>
+
+                        <div class="server-mini-list" id="dashboardServers">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>Traffic Flow</h3>
+                        <p>Dynamic request routing</p>
+                    </div>
+
+                </div>
+
+                <div class="architecture-flow">
+
+                    <div class="flow-box">
+                        <span>👤</span>
+                        <strong>Client</strong>
+                    </div>
+
+                    <div class="flow-line">→</div>
+
+                    <div class="flow-box proxy-flow">
+                        <span>🛡️</span>
+                        <strong>Proxy</strong>
+                        <small>8080</small>
+                    </div>
+
+                    <div class="flow-line">→</div>
+
+                    <div class="flow-servers">
+
+                        <div class="flow-server">S1</div>
+                        <div class="flow-server">S2</div>
+                        <div class="flow-server">S3</div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SERVERS
+    ====================================================== -->
+
+    <section class="page hidden-page" id="serversPage">
+
+        <div class="page-header">
+
+            <div>
+                <h1>Backend Servers</h1>
+                <p>
+                    Monitor backend health, response time,
+                    CPU and memory usage.
+                </p>
+            </div>
+
+            <div class="server-summary">
+                <span class="online-dot"></span>
+                <strong id="serversOnline">0</strong>
+                <span>Servers Online</span>
+            </div>
+
+        </div>
+
+
+        <div class="server-table-card">
+
+            <div class="card-header">
+
+                <div>
+                    <h3>Server Status</h3>
+                    <p>Real-time backend information</p>
+                </div>
+
+            </div>
+
+            <div class="table-wrapper">
+
+                <table class="server-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Server</th>
+                            <th>Port</th>
+                            <th>Status</th>
+                            <th>Response</th>
+                            <th>CPU</th>
+                            <th>Memory</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="serverTableBody"></tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div class="server-cards" id="serverCards"></div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ANALYTICS
+    ====================================================== -->
+
+    <section class="page hidden-page" id="analyticsPage">
+
+        <div class="page-header">
+
+            <div>
+                <h1>Analytics</h1>
+                <p>
+                    Analyze FlexiProxy traffic and performance.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="analytics-grid">
+
+            <div class="chart-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h3>Request Traffic</h3>
+                        <p>Requests per second</p>
+                    </div>
+
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <div class="analytics-summary">
+
+                <div class="summary-card">
+                    <span>Total Requests</span>
+                    <strong id="analyticsTotal">0</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Successful</span>
+                    <strong id="analyticsSuccess">0</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Failed</span>
+                    <strong id="analyticsFailed">0</strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Success Rate</span>
+                    <strong id="analyticsRate">100%</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         LOGS
+    ====================================================== -->
+
+    <section class="page hidden-page" id="logsPage">
+
+        <div class="page-header">
+
+            <div>
+                <h1>Request Logs</h1>
+                <p>
+                    Latest requests processed by FlexiProxy.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="logs-card">
+
+            <div class="card-header">
+
+                <div>
+                    <h3>Recent Activity</h3>
+                    <p>Last 20 requests</p>
+                </div>
+
+            </div>
+
+            <div class="logs-container" id="logsContainer">
+                <div class="empty-logs">
+                    No requests yet.
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         SETTINGS
+    ====================================================== -->
+
+    <section class="page hidden-page" id="settingsPage">
+
+        <div class="page-header">
+
+            <div>
+                <h1>Settings</h1>
+                <p>
+                    FlexiProxy system configuration.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="settings-grid">
+
+            <div class="settings-card">
+
+                <div class="settings-icon">🛡️</div>
+
+                <h3>Reverse Proxy</h3>
+
+                <p>
+                    Main FlexiProxy gateway configuration.
+                </p>
+
+                <div class="setting-row">
+                    <span>Proxy Port</span>
+                    <strong>8080</strong>
+                </div>
+
+                <div class="setting-row">
+                    <span>Status</span>
+                    <strong class="enabled">Enabled</strong>
+                </div>
+
+            </div>
+
+
+            <div class="settings-card">
+
+                <div class="settings-icon">⚖️</div>
+
+                <h3>Load Balancing</h3>
+
+                <p>
+                    Traffic distribution algorithm.
+                </p>
+
+                <div class="setting-row">
+                    <span>Algorithm</span>
+                    <strong>Round Robin</strong>
+                </div>
+
+                <div class="setting-row">
+                    <span>Status</span>
+                    <strong class="enabled">Enabled</strong>
+                </div>
+
+            </div>
+
+
+            <div class="settings-card">
+
+                <div class="settings-icon">❤️</div>
+
+                <h3>Health Monitoring</h3>
+
+                <p>
+                    Automatic backend server monitoring.
+                </p>
+
+                <div class="setting-row">
+                    <span>Health Check</span>
+                    <strong>/health</strong>
+                </div>
+
+                <div class="setting-row">
+                    <span>Status</span>
+                    <strong class="enabled">Enabled</strong>
+                </div>
+
+            </div>
+
+
+            <div class="settings-card">
+
+                <div class="settings-icon">🔄</div>
+
+                <h3>Automatic Failover</h3>
+
+                <p>
+                    Automatically avoids unavailable servers.
+                </p>
+
+                <div class="setting-row">
+                    <span>Failover</span>
+                    <strong class="enabled">Enabled</strong>
+                </div>
+
+                <div class="setting-row">
+                    <span>Backend Servers</span>
+                    <strong>3</strong>
+                </div>
+
+            </div>
+
+
+            <div class="settings-card technology-card">
+
+                <div class="settings-icon">💻</div>
+
+                <h3>Technology Stack</h3>
+
+                <p>
+                    Technologies used in FlexiProxy.
+                </p>
+
+                <div class="tech-list">
+                    <span>Python</span>
+                    <span>FastAPI</span>
+                    <span>Uvicorn</span>
+                    <span>HTTPX</span>
+                    <span>PSUtil</span>
+                    <span>HTML</span>
+                    <span>CSS</span>
+                    <span>JavaScript</span>
+                    <span>Chart.js</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+
+    <footer class="footer">
+
+        <div>
+            🛡️ FlexiProxy
+        </div>
+
+        <div>
+            Smart Routing · Health Monitoring · Automatic Failover
+        </div>
+
+        <div>
+            v1.0
+        </div>
+
+    </footer>
+
+</main>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
