@@ -1,5 +1,7 @@
+```javascript
 /* =========================================================
-   FLEXIPROXY FRONTEND
+   FLEXIPROXY FRONTEND - COMPLETE SCRIPT
+   Early-Warning Health Monitoring Enabled
 ========================================================= */
 
 const API = "http://localhost:8080";
@@ -65,6 +67,7 @@ function showPage(page) {
         item.classList.remove("active");
     });
 
+
     const activeButton =
         document.querySelector(`[data-page="${page}"]`);
 
@@ -93,6 +96,7 @@ function showPage(page) {
 
         document.getElementById("pageSubtitle").textContent =
             pages[page].subtitle;
+
     }
 
 }
@@ -106,11 +110,13 @@ function updateClock() {
 
     const now = new Date();
 
+
     const time = now.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit"
     });
+
 
     const date = now.toLocaleDateString([], {
         day: "2-digit",
@@ -122,12 +128,15 @@ function updateClock() {
     document.getElementById("currentTime").textContent =
         `${date} ${time}`;
 
+
     document.getElementById("sidebarTime").textContent =
         `${date} ${time}`;
+
 }
 
 
 setInterval(updateClock, 1000);
+
 updateClock();
 
 
@@ -143,20 +152,29 @@ function setConnection(connected) {
     const dot =
         document.querySelector(".connection-dot");
 
+
     if (connected) {
 
         text.textContent = "Connected";
+
         dot.style.background = "#35d39a";
+
         dot.style.boxShadow =
             "0 0 10px rgba(53,211,154,.6)";
 
-    } else {
+    }
+
+    else {
 
         text.textContent = "Disconnected";
+
         dot.style.background = "#ff5f6d";
+
         dot.style.boxShadow =
             "0 0 10px rgba(255,95,109,.6)";
+
     }
+
 }
 
 
@@ -171,29 +189,42 @@ async function updateStatus() {
         const response =
             await fetch(STATUS_API);
 
+
         if (!response.ok) {
             throw new Error("Status request failed");
         }
 
+
         const data =
             await response.json();
 
+
         setConnection(true);
 
+
         updateSystemHealth(data);
+
 
         updateServers(data.servers || []);
 
     }
 
+
     catch (error) {
 
         console.error("Status error:", error);
 
+
         setConnection(false);
 
-        document.getElementById("overallHealth")
-            .textContent = "Offline";
+
+        const health =
+            document.getElementById("overallHealth");
+
+
+        health.textContent = "Offline";
+
+        health.style.color = "#ff5f6d";
 
     }
 
@@ -209,52 +240,101 @@ function updateSystemHealth(data) {
     const cpu =
         Number(data.cpu || 0);
 
+
     const ram =
         Number(data.ram || 0);
 
-    const healthyServers =
-        Number(data.healthy_servers || 0);
+
+    const servers =
+        data.servers || [];
+
+
+    const healthyCount =
+        servers.filter(server =>
+            server.status === "Healthy"
+        ).length;
+
+
+    const warningCount =
+        servers.filter(server =>
+            server.status === "Warning"
+        ).length;
+
+
+    const criticalCount =
+        servers.filter(server =>
+            server.status === "Critical"
+        ).length;
 
 
     document.getElementById("cpuValue")
         .textContent = `${cpu.toFixed(1)}%`;
+
 
     document.getElementById("ramValue")
         .textContent = `${ram.toFixed(1)}%`;
 
 
     document.getElementById("cpuBar")
-        .style.width = `${Math.min(cpu, 100)}%`;
+        .style.width =
+        `${Math.min(cpu, 100)}%`;
+
 
     document.getElementById("ramBar")
-        .style.width = `${Math.min(ram, 100)}%`;
+        .style.width =
+        `${Math.min(ram, 100)}%`;
+
+
+    /*
+       Healthy + Warning servers can
+       still receive traffic.
+    */
+
+    const usableServers =
+        healthyCount + warningCount;
 
 
     document.getElementById("serverHealthCount")
-        .textContent = healthyServers;
+        .textContent = usableServers;
 
+
+    /*
+       Overall system status
+    */
 
     const health =
         document.getElementById("overallHealth");
 
-    if (healthyServers === 0) {
+
+    if (criticalCount > 0) {
 
         health.textContent = "Critical";
+
         health.style.color = "#ff5f6d";
 
     }
 
-    else if (healthyServers < 3) {
+    else if (warningCount > 0) {
 
         health.textContent = "Warning";
+
         health.style.color = "#ffad5c";
+
+    }
+
+    else if (healthyCount > 0) {
+
+        health.textContent = "Healthy";
+
+        health.style.color = "#35d39a";
 
     }
 
     else {
 
-        health.textContent = "Healthy";
-        health.style.color = "#35d39a";
+        health.textContent = "Offline";
+
+        health.style.color = "#ff5f6d";
 
     }
 
@@ -282,6 +362,59 @@ function updateServers(servers) {
 
     document.getElementById("serversOnline")
         .textContent = online;
+
+}
+
+
+/* =========================================================
+   STATUS COLOR
+========================================================= */
+
+function getStatusClass(status) {
+
+    if (status === "Healthy") {
+        return "status-healthy";
+    }
+
+
+    if (status === "Warning") {
+        return "status-warning";
+    }
+
+
+    if (status === "Critical") {
+        return "status-critical";
+    }
+
+
+    return "status-offline";
+
+}
+
+
+/* =========================================================
+   STATUS ICON
+========================================================= */
+
+function getStatusIcon(status) {
+
+    if (status === "Healthy") {
+        return "🟢";
+    }
+
+
+    if (status === "Warning") {
+        return "🟡";
+    }
+
+
+    if (status === "Critical") {
+        return "🔴";
+    }
+
+
+    return "⚫";
+
 }
 
 
@@ -294,6 +427,7 @@ function updateDashboardServers(servers) {
     const container =
         document.getElementById("dashboardServers");
 
+
     container.innerHTML = "";
 
 
@@ -302,14 +436,31 @@ function updateDashboardServers(servers) {
         const item =
             document.createElement("div");
 
+
         item.className = "mini-server";
 
-        item.textContent =
-            `S${index + 1}`;
+
+        const icon =
+            getStatusIcon(server.status);
+
+
+        item.innerHTML =
+            `${icon} S${index + 1}`;
+
 
         if (server.status === "Offline") {
 
             item.style.color = "#ff5f6d";
+
+            item.style.background =
+                "rgba(255,95,109,.1)";
+
+        }
+
+        else if (server.status === "Critical") {
+
+            item.style.color = "#ff5f6d";
+
             item.style.background =
                 "rgba(255,95,109,.1)";
 
@@ -318,10 +469,21 @@ function updateDashboardServers(servers) {
         else if (server.status === "Warning") {
 
             item.style.color = "#ffad5c";
+
             item.style.background =
                 "rgba(255,173,92,.1)";
 
         }
+
+        else {
+
+            item.style.color = "#35d39a";
+
+            item.style.background =
+                "rgba(53,211,154,.1)";
+
+        }
+
 
         container.appendChild(item);
 
@@ -339,6 +501,7 @@ function updateServerTable(servers) {
     const tbody =
         document.getElementById("serverTableBody");
 
+
     tbody.innerHTML = "";
 
 
@@ -346,13 +509,15 @@ function updateServerTable(servers) {
 
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align:center;color:#8d99aa;">
+                <td colspan="8"
+                    style="text-align:center;color:#8d99aa;">
                     No servers found
                 </td>
             </tr>
         `;
 
         return;
+
     }
 
 
@@ -362,16 +527,20 @@ function updateServerTable(servers) {
             document.createElement("tr");
 
 
-        let statusClass =
-            "status-offline";
+        const statusClass =
+            getStatusClass(server.status);
 
-        if (server.status === "Healthy") {
-            statusClass = "status-healthy";
-        }
 
-        else if (server.status === "Warning") {
-            statusClass = "status-warning";
-        }
+        const statusIcon =
+            getStatusIcon(server.status);
+
+
+        const score =
+            Number(server.score ?? -1);
+
+
+        const trend =
+            server.trend || {};
 
 
         row.innerHTML = `
@@ -386,7 +555,7 @@ function updateServerTable(servers) {
 
             <td>
                 <span class="status-badge ${statusClass}">
-                    ${server.status}
+                    ${statusIcon} ${server.status}
                 </span>
             </td>
 
@@ -400,6 +569,26 @@ function updateServerTable(servers) {
 
             <td>
                 ${(server.ram || 0).toFixed(1)}%
+            </td>
+
+            <td>
+                <strong>
+                    ${score >= 0 ? score.toFixed(2) : "N/A"}
+                </strong>
+            </td>
+
+            <td>
+                <div>
+                    CPU: ${getTrendDisplay(trend.cpu)}
+                </div>
+
+                <div>
+                    RAM: ${getTrendDisplay(trend.ram)}
+                </div>
+
+                <div>
+                    Response: ${getTrendDisplay(trend.response_time)}
+                </div>
             </td>
 
         `;
@@ -421,61 +610,186 @@ function updateServerCards(servers) {
     const container =
         document.getElementById("serverCards");
 
+
     container.innerHTML = "";
 
 
     servers.forEach(server => {
 
-        let statusClass =
-            "status-offline";
+        const statusClass =
+            getStatusClass(server.status);
 
-        if (server.status === "Healthy") {
-            statusClass = "status-healthy";
+
+        const statusIcon =
+            getStatusIcon(server.status);
+
+
+        const score =
+            Number(server.score ?? -1);
+
+
+        /*
+           Warning messages
+        */
+
+        let warningHTML = "";
+
+
+        if (
+            server.warning_messages &&
+            server.warning_messages.length > 0
+        ) {
+
+            warningHTML = `
+
+                <div class="server-warning-box">
+
+                    <strong>⚠ Early Warning</strong>
+
+                    ${server.warning_messages
+                        .map(message =>
+                            `<div>${message}</div>`
+                        )
+                        .join("")}
+
+                </div>
+
+            `;
+
         }
 
-        else if (server.status === "Warning") {
-            statusClass = "status-warning";
-        }
+
+        /*
+           Trends
+        */
+
+        const trend =
+            server.trend || {};
+
+
+        const cpuTrend =
+            getTrendDisplay(trend.cpu);
+
+
+        const ramTrend =
+            getTrendDisplay(trend.ram);
+
+
+        const responseTrend =
+            getTrendDisplay(trend.response_time);
 
 
         const card =
             document.createElement("div");
+
 
         card.className = "server-card";
 
 
         card.innerHTML = `
 
-            <h3>${server.name}</h3>
+            <div class="server-card-top">
 
-            <p>
-                Backend port ${server.port}
-            </p>
+                <div>
 
-            <div class="server-card-status">
+                    <h3>${server.name}</h3>
+
+                    <p>
+                        Backend port ${server.port}
+                    </p>
+
+                </div>
 
                 <span class="status-badge ${statusClass}">
-                    ${server.status}
+                    ${statusIcon} ${server.status}
                 </span>
 
             </div>
 
 
+            ${warningHTML}
+
+
+            <div class="server-card-score">
+
+                <span>Smart Score</span>
+
+                <strong>
+                    ${score >= 0
+                        ? score.toFixed(2)
+                        : "N/A"}
+                </strong>
+
+            </div>
+
+
             <div class="server-card-metric">
+
                 <span>Response Time</span>
-                <strong>${server.response_time || 0} ms</strong>
+
+                <strong>
+                    ${server.response_time || 0} ms
+                </strong>
+
             </div>
 
 
             <div class="server-card-metric">
+
                 <span>CPU Usage</span>
-                <strong>${(server.cpu || 0).toFixed(1)}%</strong>
+
+                <strong>
+                    ${(server.cpu || 0).toFixed(1)}%
+                </strong>
+
             </div>
 
 
             <div class="server-card-metric">
+
                 <span>Memory Usage</span>
-                <strong>${(server.ram || 0).toFixed(1)}%</strong>
+
+                <strong>
+                    ${(server.ram || 0).toFixed(1)}%
+                </strong>
+
+            </div>
+
+
+            <div class="server-trends">
+
+                <div class="trend-item">
+
+                    <span>CPU Trend</span>
+
+                    <strong>
+                        ${cpuTrend}
+                    </strong>
+
+                </div>
+
+
+                <div class="trend-item">
+
+                    <span>RAM Trend</span>
+
+                    <strong>
+                        ${ramTrend}
+                    </strong>
+
+                </div>
+
+
+                <div class="trend-item">
+
+                    <span>Response Trend</span>
+
+                    <strong>
+                        ${responseTrend}
+                    </strong>
+
+                </div>
+
             </div>
 
         `;
@@ -484,6 +798,27 @@ function updateServerCards(servers) {
         container.appendChild(card);
 
     });
+
+}
+
+
+/* =========================================================
+   TREND DISPLAY
+========================================================= */
+
+function getTrendDisplay(trend) {
+
+    if (trend === "Rising") {
+        return "📈 Rising";
+    }
+
+
+    if (trend === "Falling") {
+        return "📉 Falling";
+    }
+
+
+    return "➡ Stable";
 
 }
 
@@ -499,9 +834,11 @@ async function updateMetrics() {
         const response =
             await fetch(METRICS_API);
 
+
         if (!response.ok) {
             throw new Error("Metrics request failed");
         }
+
 
         const data =
             await response.json();
@@ -510,17 +847,22 @@ async function updateMetrics() {
         const rps =
             Number(data.requests_per_second || 0);
 
+
         const active =
             Number(data.active_requests || 0);
+
 
         const total =
             Number(data.total_requests || 0);
 
+
         const success =
             Number(data.successful_requests || 0);
 
+
         const failed =
             Number(data.failed_requests || 0);
+
 
         const rate =
             Number(data.success_rate ?? 100);
@@ -529,36 +871,48 @@ async function updateMetrics() {
         document.getElementById("requestsPerSecond")
             .textContent = rps;
 
+
         document.getElementById("activeRequests")
             .textContent = active;
+
 
         document.getElementById("totalRequests")
             .textContent = total;
 
+
         document.getElementById("successRate")
-            .textContent = `${rate.toFixed(2)}%`;
+            .textContent =
+            `${rate.toFixed(2)}%`;
 
 
         document.getElementById("analyticsTotal")
             .textContent = total;
 
+
         document.getElementById("analyticsSuccess")
             .textContent = success;
+
 
         document.getElementById("analyticsFailed")
             .textContent = failed;
 
+
         document.getElementById("analyticsRate")
-            .textContent = `${rate.toFixed(2)}%`;
+            .textContent =
+            `${rate.toFixed(2)}%`;
 
 
         updateChart(rps);
 
     }
 
+
     catch (error) {
 
-        console.error("Metrics error:", error);
+        console.error(
+            "Metrics error:",
+            error
+        );
 
     }
 
@@ -574,6 +928,7 @@ function createChart() {
     const canvas =
         document.getElementById("trafficChart");
 
+
     if (!canvas) {
         return;
     }
@@ -586,6 +941,7 @@ function createChart() {
         );
 
         return;
+
     }
 
 
@@ -597,13 +953,16 @@ function createChart() {
 
         type: "line",
 
+
         data: {
 
             labels: [],
 
+
             datasets: [
 
                 {
+
                     label: "Requests / Sec",
 
                     data: [],
@@ -620,10 +979,13 @@ function createChart() {
                     borderWidth: 2,
 
                     pointRadius: 2
+
                 }
 
             ]
+
         },
+
 
         options: {
 
@@ -633,49 +995,68 @@ function createChart() {
 
             animation: false,
 
+
             plugins: {
 
                 legend: {
+
                     labels: {
+
                         color: "#8d99aa",
+
                         font: {
                             size: 10
                         }
+
                     }
+
                 }
 
             },
+
 
             scales: {
 
                 x: {
 
                     ticks: {
+
                         color: "#667386",
+
                         font: {
                             size: 9
                         }
+
                     },
 
+
                     grid: {
-                        color: "rgba(255,255,255,.04)"
+                        color:
+                            "rgba(255,255,255,.04)"
                     }
 
                 },
+
 
                 y: {
 
                     beginAtZero: true,
 
+
                     ticks: {
+
                         color: "#667386",
+
                         font: {
                             size: 9
                         }
+
                     },
 
+
                     grid: {
-                        color: "rgba(255,255,255,.04)"
+                        color:
+                            "rgba(255,255,255,.04)"
                     }
 
                 }
@@ -689,6 +1070,10 @@ function createChart() {
 }
 
 
+/* =========================================================
+   UPDATE CHART
+========================================================= */
+
 function updateChart(value) {
 
     if (!chart) {
@@ -698,12 +1083,16 @@ function updateChart(value) {
 
     const now =
         new Date().toLocaleTimeString([], {
+
             minute: "2-digit",
+
             second: "2-digit"
+
         });
 
 
     chart.data.labels.push(now);
+
 
     chart.data.datasets[0].data.push(value);
 
@@ -733,25 +1122,36 @@ async function updateLogs() {
         const response =
             await fetch(LOGS_API);
 
+
         if (!response.ok) {
             throw new Error("Logs request failed");
         }
 
+
         const data =
             await response.json();
+
 
         renderLogs(data.logs || []);
 
     }
 
+
     catch (error) {
 
-        console.error("Logs error:", error);
+        console.error(
+            "Logs error:",
+            error
+        );
 
     }
 
 }
 
+
+/* =========================================================
+   RENDER LOGS
+========================================================= */
 
 function renderLogs(logs) {
 
@@ -768,6 +1168,7 @@ function renderLogs(logs) {
         `;
 
         return;
+
     }
 
 
@@ -778,6 +1179,7 @@ function renderLogs(logs) {
 
         const row =
             document.createElement("div");
+
 
         row.className = "log-row";
 
@@ -801,11 +1203,11 @@ function renderLogs(logs) {
             </span>
 
             <span class="log-server">
-                ${log.server}
+                ${log.server || "Unknown"}
             </span>
 
             <span class="${statusClass}">
-                ${log.status}
+                ${log.status || "Unknown"}
             </span>
 
             <span>
@@ -826,7 +1228,8 @@ function renderLogs(logs) {
    TEST REQUEST
 ========================================================= */
 
-document.getElementById("testRequestBtn")
+document
+    .getElementById("testRequestBtn")
     .addEventListener("click", async () => {
 
         try {
@@ -834,19 +1237,34 @@ document.getElementById("testRequestBtn")
             const response =
                 await fetch(PROXY_API);
 
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Proxy request failed"
+                );
+
+            }
+
+
             const data =
                 await response.json();
+
 
             console.log(
                 "FlexiProxy response:",
                 data
             );
 
+
             await updateMetrics();
+
             await updateLogs();
+
             await updateStatus();
 
         }
+
 
         catch (error) {
 
@@ -854,6 +1272,7 @@ document.getElementById("testRequestBtn")
                 "Test request failed:",
                 error
             );
+
 
             alert(
                 "Could not connect to FlexiProxy backend."
@@ -865,10 +1284,11 @@ document.getElementById("testRequestBtn")
 
 
 /* =========================================================
-   LIVE TRAFFIC
+   LIVE TRAFFIC BUTTON
 ========================================================= */
 
-document.getElementById("trafficBtn")
+document
+    .getElementById("trafficBtn")
     .addEventListener("click", () => {
 
         if (trafficRunning) {
@@ -886,6 +1306,10 @@ document.getElementById("trafficBtn")
     });
 
 
+/* =========================================================
+   START LIVE TRAFFIC
+========================================================= */
+
 function startTraffic() {
 
     trafficRunning = true;
@@ -893,6 +1317,7 @@ function startTraffic() {
 
     const button =
         document.getElementById("trafficBtn");
+
 
     button.textContent =
         "■ Stop Live Traffic";
@@ -910,6 +1335,10 @@ function startTraffic() {
 }
 
 
+/* =========================================================
+   STOP LIVE TRAFFIC
+========================================================= */
+
 function stopTraffic() {
 
     trafficRunning = false;
@@ -917,6 +1346,7 @@ function stopTraffic() {
 
     const button =
         document.getElementById("trafficBtn");
+
 
     button.textContent =
         "▶ Start Live Traffic";
@@ -935,12 +1365,25 @@ function stopTraffic() {
 }
 
 
+/* =========================================================
+   SEND LIVE TRAFFIC REQUEST
+========================================================= */
+
 async function sendTrafficRequest() {
 
     try {
 
         const response =
             await fetch(PROXY_API);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Traffic request failed"
+            );
+
+        }
 
 
         const data =
@@ -957,7 +1400,17 @@ async function sendTrafficRequest() {
 
         await updateLogs();
 
+
+        /*
+           Refresh health as well.
+           This allows the dashboard to show
+           Warning / Critical changes during traffic.
+        */
+
+        await updateStatus();
+
     }
+
 
     catch (error) {
 
@@ -992,13 +1445,27 @@ async function initialize() {
    AUTO REFRESH
 ========================================================= */
 
-setInterval(updateStatus, 3000);
+setInterval(
+    updateStatus,
+    3000
+);
 
-setInterval(updateMetrics, 1000);
 
-setInterval(updateLogs, 3000);
+setInterval(
+    updateMetrics,
+    1000
+);
 
 
-/* START */
+setInterval(
+    updateLogs,
+    3000
+);
+
+
+/* =========================================================
+   START APPLICATION
+========================================================= */
 
 initialize();
+```
