@@ -6,10 +6,10 @@
 
 const API = "http://localhost:8080";
 
-const STATUS_API = `${API}/api/status`;
-const METRICS_API = `${API}/api/metrics`;
-const LOGS_API = `${API}/api/logs`;
-const PROXY_API = `${API}/proxy`;
+const STATUS_API = API + "/api/status";
+const METRICS_API = API + "/api/metrics";
+const LOGS_API = API + "/api/logs";
+const PROXY_API = API + "/proxy";
 
 let trafficRunning = false;
 let trafficInterval = null;
