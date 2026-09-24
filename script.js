@@ -3,7 +3,7 @@
 // Clean version - no template literals
 // ============================================================
 
-const API = "http://localhost:8080";
+const API = "http://127.0.0.1:8080";
 
 const STATUS_API = API + "/api/status";
 const METRICS_API = API + "/api/metrics";
