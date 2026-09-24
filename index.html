@@ -1,721 +1,766 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>FlexiProxy Dashboard</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
-
     <link rel="stylesheet" href="style.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
-<!-- ================= SIDEBAR ================= -->
+<div class="app">
 
-<aside class="sidebar">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-    <div class="logo">
-        <div class="logo-icon">🛡️</div>
-
-        <div>
-            <h2>FlexiProxy</h2>
-            <span>Smart · Fast · Reliable</span>
+        <div class="logo">
+            <div class="logo-icon">F</div>
+            <div>
+                <h2>FlexiProxy</h2>
+                <span>Proxy Management</span>
+            </div>
         </div>
-    </div>
 
-    <div class="system-status">
-        <span class="status-dot"></span>
+        <nav>
+            <button class="nav-item active" onclick="showPage('dashboard', this)">
+                <span>▣</span> Dashboard
+            </button>
 
-        <div>
-            <strong>System Online</strong>
-            <small id="sidebarTime">Loading...</small>
+            <button class="nav-item" onclick="showPage('servers', this)">
+                <span>◉</span> Servers
+            </button>
+
+            <button class="nav-item" onclick="showPage('loadbalancer', this)">
+                <span>⇄</span> Load Balancer
+            </button>
+
+            <button class="nav-item" onclick="showPage('logs', this)">
+                <span>☷</span> Logs
+            </button>
+
+            <button class="nav-item" onclick="showPage('settings', this)">
+                <span>⚙</span> Settings
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="system-status">
+                <span class="status-dot"></span>
+                <div>
+                    <strong>System Online</strong>
+                    <small>Prototype Mode</small>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <nav class="navigation">
+    </aside>
 
-        <button class="nav-item active" data-page="dashboard">
-            <span>⌂</span>
-            Dashboard
-        </button>
 
-        <button class="nav-item" data-page="servers">
-            <span>▣</span>
-            Servers
-        </button>
+    <!-- MAIN CONTENT -->
+    <main class="main">
 
-        <button class="nav-item" data-page="analytics">
-            <span>▥</span>
-            Analytics
-        </button>
-
-        <button class="nav-item" data-page="logs">
-            <span>▤</span>
-            Logs
-        </button>
-
-        <button class="nav-item" data-page="settings">
-            <span>⚙</span>
-            Settings
-        </button>
-
-    </nav>
-
-    <div class="sidebar-bottom">
-
-        <div class="connection-box">
-            <span class="connection-dot"></span>
+        <!-- HEADER -->
+        <header class="header">
 
             <div>
-                <small>Backend Connection</small>
-                <strong id="connectionText">Connecting...</strong>
-            </div>
-        </div>
-
-        <div class="sidebar-version">
-            FlexiProxy v1.0
-        </div>
-
-    </div>
-
-</aside>
-
-
-<!-- ================= MAIN ================= -->
-
-<main class="main-content">
-
-    <!-- TOP BAR -->
-
-    <header class="topbar">
-
-        <div>
-            <div class="breadcrumb">
-                FlexiProxy / <span id="pageTitle">Dashboard</span>
+                <h1 id="pageTitle">Dashboard</h1>
+                <p>FlexiProxy high-throughput reverse proxy monitoring</p>
             </div>
 
-            <p id="pageSubtitle">
-                Real-time reverse proxy monitoring
-            </p>
-        </div>
+            <div class="header-right">
 
-        <div class="clock">
-            ◷ <span id="currentTime">Loading...</span>
-        </div>
-
-    </header>
-
-
-    <!-- =====================================================
-         DASHBOARD
-    ====================================================== -->
-
-    <section class="page" id="dashboardPage">
-
-        <!-- HERO -->
-
-        <div class="hero-card">
-
-            <div class="hero-content">
-
-                <div class="hero-badge">
-                    ● LIVE SYSTEM
+                <div class="live">
+                    <span class="live-dot"></span>
+                    LIVE
                 </div>
 
-                <h1>
-                    FlexiProxy -
-                    <span>Final Architecture</span>
-                </h1>
+                <div class="time" id="currentTime">
+                    00:00:00
+                </div>
 
-                <p>
-                    A High-Throughput Event-Driven Reverse Proxy
-                    with Dynamic Load Balancing and Health Monitoring.
-                </p>
+                <div class="profile">
+                    <div class="avatar">A</div>
+                    <div>
+                        <strong>Admin</strong>
+                        <small>Administrator</small>
+                    </div>
+                </div>
 
-                <div class="hero-actions">
+            </div>
 
-                    <button class="primary-btn" id="trafficBtn">
-                        ▶ Start Live Traffic
+        </header>
+
+
+        <!-- ================= DASHBOARD ================= -->
+
+        <section id="dashboard" class="page active-page">
+
+            <!-- STAT CARDS -->
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span>Requests / Sec</span>
+                        <span class="stat-icon blue">↗</span>
+                    </div>
+
+                    <div class="stat-value" id="requests">1,248</div>
+
+                    <div class="stat-change positive">
+                        ↑ 12.5% <span>vs last hour</span>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span>Active Connections</span>
+                        <span class="stat-icon purple">↔</span>
+                    </div>
+
+                    <div class="stat-value" id="connections">342</div>
+
+                    <div class="stat-change positive">
+                        ↑ 8.2% <span>vs last hour</span>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span>Avg Response Time</span>
+                        <span class="stat-icon orange">◷</span>
+                    </div>
+
+                    <div class="stat-value">
+                        <span id="responseTime">42</span> ms
+                    </div>
+
+                    <div class="stat-change positive">
+                        ↓ 5.4% <span>improvement</span>
+                    </div>
+                </div>
+
+
+                <div class="stat-card">
+                    <div class="stat-top">
+                        <span>Success Rate</span>
+                        <span class="stat-icon green">✓</span>
+                    </div>
+
+                    <div class="stat-value">
+                        <span id="successRate">99.8</span>%
+                    </div>
+
+                    <div class="stat-change positive">
+                        ↑ 0.3% <span>this hour</span>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- SERVER + HEALTH -->
+
+            <div class="two-column">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Backend Servers</h2>
+                            <p>Real-time server health monitoring</p>
+                        </div>
+
+                        <span class="badge green-badge">
+                            ● All Systems Operational
+                        </span>
+                    </div>
+
+                    <div class="server-list">
+
+                        <div class="server">
+                            <div class="server-name">
+                                <span class="server-dot"></span>
+                                <div>
+                                    <strong>Server 01</strong>
+                                    <small>192.168.1.101:8001</small>
+                                </div>
+                            </div>
+
+                            <div class="server-stat">
+                                <span>CPU</span>
+                                <strong id="cpu1">38%</strong>
+                            </div>
+
+                            <div class="server-stat">
+                                <span>Memory</span>
+                                <strong id="memory1">54%</strong>
+                            </div>
+
+                            <span class="online">Online</span>
+                        </div>
+
+
+                        <div class="server">
+                            <div class="server-name">
+                                <span class="server-dot"></span>
+                                <div>
+                                    <strong>Server 02</strong>
+                                    <small>192.168.1.102:8002</small>
+                                </div>
+                            </div>
+
+                            <div class="server-stat">
+                                <span>CPU</span>
+                                <strong id="cpu2">42%</strong>
+                            </div>
+
+                            <div class="server-stat">
+                                <span>Memory</span>
+                                <strong id="memory2">61%</strong>
+                            </div>
+
+                            <span class="online">Online</span>
+                        </div>
+
+
+                        <div class="server">
+                            <div class="server-name">
+                                <span class="server-dot"></span>
+                                <div>
+                                    <strong>Server 03</strong>
+                                    <small>192.168.1.103:8003</small>
+                                </div>
+                            </div>
+
+                            <div class="server-stat">
+                                <span>CPU</span>
+                                <strong id="cpu3">29%</strong>
+                            </div>
+
+                            <div class="server-stat">
+                                <span>Memory</span>
+                                <strong id="memory3">48%</strong>
+                            </div>
+
+                            <span class="online">Online</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- HEALTH -->
+
+                <div class="panel health-panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>System Health</h2>
+                            <p>Current infrastructure status</p>
+                        </div>
+                    </div>
+
+                    <div class="health-circle">
+                        <div>
+                            <strong>98%</strong>
+                            <span>Healthy</span>
+                        </div>
+                    </div>
+
+                    <div class="health-items">
+
+                        <div>
+                            <span class="health-green"></span>
+                            <span>Proxy Service</span>
+                            <strong>Operational</strong>
+                        </div>
+
+                        <div>
+                            <span class="health-green"></span>
+                            <span>Load Balancer</span>
+                            <strong>Operational</strong>
+                        </div>
+
+                        <div>
+                            <span class="health-green"></span>
+                            <span>Health Monitor</span>
+                            <strong>Operational</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CHARTS -->
+
+            <div class="two-column">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Traffic Overview</h2>
+                            <p>Requests processed per second</p>
+                        </div>
+
+                        <span class="chart-value" id="trafficValue">
+                            1,248 req/s
+                        </span>
+                    </div>
+
+                    <div class="chart">
+                        <div class="chart-lines">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <svg viewBox="0 0 700 220" preserveAspectRatio="none">
+
+                            <polyline
+                                id="trafficLine"
+                                points="0,160 70,145 140,165 210,110 280,125 350,85 420,105 490,65 560,80 630,45 700,60"
+                            />
+
+                            <polygon
+                                id="trafficArea"
+                                points="0,160 70,145 140,165 210,110 280,125 350,85 420,105 490,65 560,80 630,45 700,60 700,220 0,220"
+                            />
+
+                        </svg>
+
+                    </div>
+
+                    <div class="chart-labels">
+                        <span>10:00</span>
+                        <span>11:00</span>
+                        <span>12:00</span>
+                        <span>13:00</span>
+                        <span>14:00</span>
+                        <span>15:00</span>
+                        <span>Now</span>
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Load Distribution</h2>
+                            <p>Traffic across backend servers</p>
+                        </div>
+                    </div>
+
+                    <div class="load-item">
+                        <div>
+                            <span>Server 01</span>
+                            <strong id="load1">38%</strong>
+                        </div>
+                        <div class="progress">
+                            <span id="loadBar1" style="width:38%"></span>
+                        </div>
+                    </div>
+
+                    <div class="load-item">
+                        <div>
+                            <span>Server 02</span>
+                            <strong id="load2">42%</strong>
+                        </div>
+                        <div class="progress">
+                            <span id="loadBar2" style="width:42%"></span>
+                        </div>
+                    </div>
+
+                    <div class="load-item">
+                        <div>
+                            <span>Server 03</span>
+                            <strong id="load3">20%</strong>
+                        </div>
+                        <div class="progress">
+                            <span id="loadBar3" style="width:20%"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- WARNINGS + LOGS -->
+
+            <div class="two-column">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Recent Warnings</h2>
+                            <p>Latest system notifications</p>
+                        </div>
+
+                        <span class="warning-count">2</span>
+                    </div>
+
+                    <div class="warning">
+
+                        <span class="warning-icon">!</span>
+
+                        <div>
+                            <strong>High traffic detected</strong>
+                            <p>Traffic increased by 18% on Server 02</p>
+                            <small>2 minutes ago</small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="warning">
+
+                        <span class="warning-icon">!</span>
+
+                        <div>
+                            <strong>Memory usage alert</strong>
+                            <p>Server 02 memory usage reached 61%</p>
+                            <small>7 minutes ago</small>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Recent Logs</h2>
+                            <p>Latest proxy activity</p>
+                        </div>
+
+                        <button class="small-button" onclick="showPage('logs')">
+                            View All
+                        </button>
+                    </div>
+
+                    <div class="logs">
+
+                        <div class="log">
+                            <span class="log-time">15:42:18</span>
+                            <span class="log-success">INFO</span>
+                            <span>Request routed to Server 01</span>
+                        </div>
+
+                        <div class="log">
+                            <span class="log-time">15:42:12</span>
+                            <span class="log-success">INFO</span>
+                            <span>Health check successful</span>
+                        </div>
+
+                        <div class="log">
+                            <span class="log-time">15:41:59</span>
+                            <span class="log-warning">WARN</span>
+                            <span>Traffic spike detected</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= SERVERS ================= -->
+
+        <section id="servers" class="page">
+
+            <div class="page-grid">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Backend Servers</h2>
+                            <p>Manage and monitor backend nodes</p>
+                        </div>
+
+                        <button class="primary-button" onclick="addServer()">
+                            + Add Server
+                        </button>
+                    </div>
+
+                    <div id="serverTable">
+
+                        <div class="table-row table-header">
+                            <span>Server</span>
+                            <span>Address</span>
+                            <span>CPU</span>
+                            <span>Memory</span>
+                            <span>Status</span>
+                        </div>
+
+                        <div class="table-row">
+                            <span>Server 01</span>
+                            <span>192.168.1.101:8001</span>
+                            <span>38%</span>
+                            <span>54%</span>
+                            <span class="online">Online</span>
+                        </div>
+
+                        <div class="table-row">
+                            <span>Server 02</span>
+                            <span>192.168.1.102:8002</span>
+                            <span>42%</span>
+                            <span>61%</span>
+                            <span class="online">Online</span>
+                        </div>
+
+                        <div class="table-row">
+                            <span>Server 03</span>
+                            <span>192.168.1.103:8003</span>
+                            <span>29%</span>
+                            <span>48%</span>
+                            <span class="online">Online</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= LOAD BALANCER ================= -->
+
+        <section id="loadbalancer" class="page">
+
+            <div class="page-grid">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h2>Load Balancer</h2>
+                            <p>Dynamic traffic distribution</p>
+                        </div>
+
+                        <span class="badge green-badge">Active</span>
+                    </div>
+
+                    <div class="lb-info">
+
+                        <div class="lb-card">
+                            <span>Algorithm</span>
+                            <strong>Weighted Round Robin</strong>
+                        </div>
+
+                        <div class="lb-card">
+                            <span>Total Requests</span>
+                            <strong id="lbRequests">1,248</strong>
+                        </div>
+
+                        <div class="lb-card">
+                            <span>Healthy Nodes</span>
+                            <strong>3 / 3</strong>
+                        </div>
+
+                        <div class="lb-card">
+                            <span>Failover</span>
+                            <strong>Enabled</strong>
+                        </div>
+
+                    </div>
+
+                    <h3 class="section-title">Traffic Distribution</h3>
+
+                    <div class="distribution">
+
+                        <div class="distribution-item">
+                            <div>
+                                <span>Server 01</span>
+                                <strong id="dist1">38%</strong>
+                            </div>
+                            <div class="progress">
+                                <span id="distBar1" style="width:38%"></span>
+                            </div>
+                        </div>
+
+                        <div class="distribution-item">
+                            <div>
+                                <span>Server 02</span>
+                                <strong id="dist2">42%</strong>
+                            </div>
+                            <div class="progress">
+                                <span id="distBar2" style="width:42%"></span>
+                            </div>
+                        </div>
+
+                        <div class="distribution-item">
+                            <div>
+                                <span>Server 03</span>
+                                <strong id="dist3">20%</strong>
+                            </div>
+                            <div class="progress">
+                                <span id="distBar3" style="width:20%"></span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= LOGS ================= -->
+
+        <section id="logs" class="page">
+
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <h2>System Logs</h2>
+                        <p>Proxy events and monitoring activity</p>
+                    </div>
+
+                    <button class="primary-button" onclick="generateLog()">
+                        + Generate Log
                     </button>
 
-                    <button class="secondary-btn" id="testRequestBtn">
-                        Send Test Request
-                    </button>
-
                 </div>
 
-            </div>
+                <div class="full-logs" id="fullLogs">
 
-            <div class="hero-architecture">
-
-                <div class="architecture-node">
-                    <div class="node-icon">👤</div>
-                    <strong>Client</strong>
-                    <small>User Request</small>
-                </div>
-
-                <div class="architecture-arrow">→</div>
-
-                <div class="architecture-node proxy-node">
-                    <div class="node-icon">🛡️</div>
-                    <strong>FlexiProxy</strong>
-                    <small>Port 8080</small>
-                </div>
-
-                <div class="architecture-arrow">→</div>
-
-                <div class="backend-group">
-
-                    <div class="architecture-node small-node">
-                        <div class="node-icon">🖥️</div>
-                        <strong>Server 1</strong>
-                        <small>8001</small>
+                    <div class="full-log">
+                        <span>15:42:18</span>
+                        <b class="info">INFO</b>
+                        <p>Request routed successfully to Server 01</p>
                     </div>
 
-                    <div class="architecture-node small-node">
-                        <div class="node-icon">🖥️</div>
-                        <strong>Server 2</strong>
-                        <small>8002</small>
+                    <div class="full-log">
+                        <span>15:42:12</span>
+                        <b class="info">INFO</b>
+                        <p>Health check completed successfully</p>
                     </div>
 
-                    <div class="architecture-node small-node">
-                        <div class="node-icon">🖥️</div>
-                        <strong>Server 3</strong>
-                        <small>8003</small>
+                    <div class="full-log">
+                        <span>15:41:59</span>
+                        <b class="warn">WARN</b>
+                        <p>Traffic spike detected on Server 02</p>
+                    </div>
+
+                    <div class="full-log">
+                        <span>15:41:41</span>
+                        <b class="info">INFO</b>
+                        <p>Load balancer redistributed incoming traffic</p>
+                    </div>
+
+                    <div class="full-log">
+                        <span>15:41:20</span>
+                        <b class="success">SUCCESS</b>
+                        <p>All backend servers are healthy</p>
                     </div>
 
                 </div>
 
             </div>
 
-        </div>
+        </section>
 
 
-        <!-- METRICS -->
+        <!-- ================= SETTINGS ================= -->
 
-        <div class="section-heading">
-            <div>
-                <h2>System Metrics</h2>
-                <p>Real-time proxy performance</p>
-            </div>
-        </div>
+        <section id="settings" class="page">
 
-        <div class="metrics-grid">
+            <div class="panel settings-panel">
 
-            <div class="metric-card">
-
-                <div class="metric-icon blue">⇅</div>
-
-                <div class="metric-info">
-                    <span>Requests / Sec</span>
-                    <strong id="requestsPerSecond">0</strong>
-                    <small>Live traffic</small>
+                <div class="panel-header">
+                    <div>
+                        <h2>Prototype Settings</h2>
+                        <p>Configure FlexiProxy simulation</p>
+                    </div>
                 </div>
 
-            </div>
-
-
-            <div class="metric-card">
-
-                <div class="metric-icon purple">⚡</div>
-
-                <div class="metric-info">
-                    <span>Active Requests</span>
-                    <strong id="activeRequests">0</strong>
-                    <small>Currently processing</small>
-                </div>
-
-            </div>
-
-
-            <div class="metric-card">
-
-                <div class="metric-icon green">✓</div>
-
-                <div class="metric-info">
-                    <span>Success Rate</span>
-                    <strong id="successRate">100%</strong>
-                    <small>Request reliability</small>
-                </div>
-
-            </div>
-
-
-            <div class="metric-card">
-
-                <div class="metric-icon orange">#</div>
-
-                <div class="metric-info">
-                    <span>Total Requests</span>
-                    <strong id="totalRequests">0</strong>
-                    <small>Since startup</small>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- HEALTH + FLOW -->
-
-        <div class="dashboard-grid">
-
-            <div class="dashboard-card">
-
-                <div class="card-header">
+                <div class="setting">
 
                     <div>
-                        <h3>System Health</h3>
-                        <p>Overall resource utilization</p>
+                        <strong>Auto Refresh</strong>
+                        <p>Automatically update dashboard statistics</p>
                     </div>
 
-                    <span class="healthy-badge" id="overallHealth">
-                        Healthy
-                    </span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoRefresh" checked onchange="toggleRefresh()">
+                        <span></span>
+                    </label>
 
                 </div>
 
 
-                <div class="health-container">
-
-                    <div class="health-item">
-
-                        <div class="health-label">
-                            <span>CPU Usage</span>
-                            <strong id="cpuValue">0%</strong>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="cpuBar"></div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="health-item">
-
-                        <div class="health-label">
-                            <span>Memory Usage</span>
-                            <strong id="ramValue">0%</strong>
-                        </div>
-
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="ramBar"></div>
-                        </div>
-
-                    </div>
-
-
-                    <div class="health-summary">
-
-                        <div class="server-count">
-                            <strong id="serverHealthCount">0</strong>
-                            <span>Healthy Servers</span>
-                        </div>
-
-                        <div class="server-mini-list" id="dashboardServers">
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="dashboard-card">
-
-                <div class="card-header">
+                <div class="setting">
 
                     <div>
-                        <h3>Traffic Flow</h3>
-                        <p>Dynamic request routing</p>
+                        <strong>Health Monitoring</strong>
+                        <p>Simulate backend health checks</p>
                     </div>
+
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span></span>
+                    </label>
 
                 </div>
 
-                <div class="architecture-flow">
 
-                    <div class="flow-box">
-                        <span>👤</span>
-                        <strong>Client</strong>
-                    </div>
-
-                    <div class="flow-line">→</div>
-
-                    <div class="flow-box proxy-flow">
-                        <span>🛡️</span>
-                        <strong>Proxy</strong>
-                        <small>8080</small>
-                    </div>
-
-                    <div class="flow-line">→</div>
-
-                    <div class="flow-servers">
-
-                        <div class="flow-server">S1</div>
-                        <div class="flow-server">S2</div>
-                        <div class="flow-server">S3</div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         SERVERS
-    ====================================================== -->
-
-    <section class="page hidden-page" id="serversPage">
-
-        <div class="page-header">
-
-            <div>
-                <h1>Backend Servers</h1>
-                <p>
-                    Monitor backend health, response time,
-                    CPU and memory usage.
-                </p>
-            </div>
-
-            <div class="server-summary">
-                <span class="online-dot"></span>
-                <strong id="serversOnline">0</strong>
-                <span>Servers Online</span>
-            </div>
-
-        </div>
-
-
-        <div class="server-table-card">
-
-            <div class="card-header">
-
-                <div>
-                    <h3>Server Status</h3>
-                    <p>Real-time backend information</p>
-                </div>
-
-            </div>
-
-            <div class="table-wrapper">
-
-                <table class="server-table">
-
-                    <thead>
-
-                        <tr>
-                            <th>Server</th>
-                            <th>Port</th>
-                            <th>Status</th>
-                            <th>Response</th>
-                            <th>CPU</th>
-                            <th>Memory</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="serverTableBody"></tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-
-        <div class="server-cards" id="serverCards"></div>
-
-    </section>
-
-
-    <!-- =====================================================
-         ANALYTICS
-    ====================================================== -->
-
-    <section class="page hidden-page" id="analyticsPage">
-
-        <div class="page-header">
-
-            <div>
-                <h1>Analytics</h1>
-                <p>
-                    Analyze FlexiProxy traffic and performance.
-                </p>
-            </div>
-
-        </div>
-
-
-        <div class="analytics-grid">
-
-            <div class="chart-card">
-
-                <div class="card-header">
+                <div class="setting">
 
                     <div>
-                        <h3>Request Traffic</h3>
-                        <p>Requests per second</p>
+                        <strong>Load Balancing</strong>
+                        <p>Simulate dynamic request distribution</p>
                     </div>
 
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <span></span>
+                    </label>
+
                 </div>
 
-                <div class="chart-container">
-                    <canvas id="trafficChart"></canvas>
-                </div>
 
-            </div>
-
-
-            <div class="analytics-summary">
-
-                <div class="summary-card">
-                    <span>Total Requests</span>
-                    <strong id="analyticsTotal">0</strong>
-                </div>
-
-                <div class="summary-card">
-                    <span>Successful</span>
-                    <strong id="analyticsSuccess">0</strong>
-                </div>
-
-                <div class="summary-card">
-                    <span>Failed</span>
-                    <strong id="analyticsFailed">0</strong>
-                </div>
-
-                <div class="summary-card">
-                    <span>Success Rate</span>
-                    <strong id="analyticsRate">100%</strong>
+                <div class="prototype-note">
+                    <strong>Prototype Mode</strong>
+                    <p>
+                        This dashboard uses simulated data for demonstration.
+                        No real backend server or network traffic is being monitored.
+                    </p>
                 </div>
 
             </div>
 
-        </div>
+        </section>
 
-    </section>
+    </main>
 
+</div>
 
-    <!-- =====================================================
-         LOGS
-    ====================================================== -->
-
-    <section class="page hidden-page" id="logsPage">
-
-        <div class="page-header">
-
-            <div>
-                <h1>Request Logs</h1>
-                <p>
-                    Latest requests processed by FlexiProxy.
-                </p>
-            </div>
-
-        </div>
-
-
-        <div class="logs-card">
-
-            <div class="card-header">
-
-                <div>
-                    <h3>Recent Activity</h3>
-                    <p>Last 20 requests</p>
-                </div>
-
-            </div>
-
-            <div class="logs-container" id="logsContainer">
-                <div class="empty-logs">
-                    No requests yet.
-                </div>
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         SETTINGS
-    ====================================================== -->
-
-    <section class="page hidden-page" id="settingsPage">
-
-        <div class="page-header">
-
-            <div>
-                <h1>Settings</h1>
-                <p>
-                    FlexiProxy system configuration.
-                </p>
-            </div>
-
-        </div>
-
-
-        <div class="settings-grid">
-
-            <div class="settings-card">
-
-                <div class="settings-icon">🛡️</div>
-
-                <h3>Reverse Proxy</h3>
-
-                <p>
-                    Main FlexiProxy gateway configuration.
-                </p>
-
-                <div class="setting-row">
-                    <span>Proxy Port</span>
-                    <strong>8080</strong>
-                </div>
-
-                <div class="setting-row">
-                    <span>Status</span>
-                    <strong class="enabled">Enabled</strong>
-                </div>
-
-            </div>
-
-
-            <div class="settings-card">
-
-                <div class="settings-icon">⚖️</div>
-
-                <h3>Load Balancing</h3>
-
-                <p>
-                    Traffic distribution algorithm.
-                </p>
-
-                <div class="setting-row">
-                    <span>Algorithm</span>
-                    <strong>Round Robin</strong>
-                </div>
-
-                <div class="setting-row">
-                    <span>Status</span>
-                    <strong class="enabled">Enabled</strong>
-                </div>
-
-            </div>
-
-
-            <div class="settings-card">
-
-                <div class="settings-icon">❤️</div>
-
-                <h3>Health Monitoring</h3>
-
-                <p>
-                    Automatic backend server monitoring.
-                </p>
-
-                <div class="setting-row">
-                    <span>Health Check</span>
-                    <strong>/health</strong>
-                </div>
-
-                <div class="setting-row">
-                    <span>Status</span>
-                    <strong class="enabled">Enabled</strong>
-                </div>
-
-            </div>
-
-
-            <div class="settings-card">
-
-                <div class="settings-icon">🔄</div>
-
-                <h3>Automatic Failover</h3>
-
-                <p>
-                    Automatically avoids unavailable servers.
-                </p>
-
-                <div class="setting-row">
-                    <span>Failover</span>
-                    <strong class="enabled">Enabled</strong>
-                </div>
-
-                <div class="setting-row">
-                    <span>Backend Servers</span>
-                    <strong>3</strong>
-                </div>
-
-            </div>
-
-
-            <div class="settings-card technology-card">
-
-                <div class="settings-icon">💻</div>
-
-                <h3>Technology Stack</h3>
-
-                <p>
-                    Technologies used in FlexiProxy.
-                </p>
-
-                <div class="tech-list">
-                    <span>Python</span>
-                    <span>FastAPI</span>
-                    <span>Uvicorn</span>
-                    <span>HTTPX</span>
-                    <span>PSUtil</span>
-                    <span>HTML</span>
-                    <span>CSS</span>
-                    <span>JavaScript</span>
-                    <span>Chart.js</span>
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- FOOTER -->
-
-    <footer class="footer">
-
-        <div>
-            🛡️ FlexiProxy
-        </div>
-
-        <div>
-            Smart Routing · Health Monitoring · Automatic Failover
-        </div>
-
-        <div>
-            v1.0
-        </div>
-
-    </footer>
-
-</main>
-
-
-<script src="script.js?v=5"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
