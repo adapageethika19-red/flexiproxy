@@ -1,1192 +1,826 @@
-/* =========================================================
-FLEXIPROXY FRONTEND - COMPLETE SCRIPT
-Early-Warning Health Monitoring Enabled
-========================================================= */
+// ============================================================
+// FLEXIPROXY FRONTEND
+// Clean version - no template literals
+// ============================================================
 
 const API = "http://localhost:8080";
 
 const STATUS_API = API + "/api/status";
 const METRICS_API = API + "/api/metrics";
 const LOGS_API = API + "/api/logs";
+const WARNINGS_API = API + "/api/warnings";
+const TRENDS_API = API + "/api/trends";
 const PROXY_API = API + "/proxy";
 
-let trafficRunning = false;
-let trafficInterval = null;
+let liveTraffic = false;
+let trafficTimer = null;
 let chart = null;
 
-/* =========================================================
-PAGE NAVIGATION
-========================================================= */
 
-const pages = {
-dashboard: {
-title: "Dashboard",
-subtitle: "Real-time reverse proxy monitoring"
-},
+// ============================================================
+// BASIC HELPERS
+// ============================================================
 
-```
-servers: {
-    title: "Servers",
-    subtitle: "Backend server health and performance"
-},
-
-analytics: {
-    title: "Analytics",
-    subtitle: "Traffic and performance analytics"
-},
-
-logs: {
-    title: "Logs",
-    subtitle: "Recent proxy activity"
-},
-
-settings: {
-    title: "Settings",
-    subtitle: "FlexiProxy system configuration"
-}
-```
-
-};
-
-document.querySelectorAll(".nav-item").forEach(function(button) {
-
-```
-button.addEventListener("click", function() {
-
-    const page = button.dataset.page;
-
-    showPage(page);
-
-});
-```
-
-});
-
-function showPage(page) {
-
-```
-document.querySelectorAll(".nav-item").forEach(function(item) {
-    item.classList.remove("active");
-});
-
-
-const activeButton =
-    document.querySelector('[data-page="' + page + '"]');
-
-if (activeButton) {
-    activeButton.classList.add("active");
+function getElement(id) {
+    return document.getElementById(id);
 }
 
 
-document.querySelectorAll(".page").forEach(function(section) {
-    section.classList.add("hidden-page");
-});
+function setText(id, value) {
+    const element = getElement(id);
 
-
-const selectedPage =
-    document.getElementById(page + "Page");
-
-if (selectedPage) {
-    selectedPage.classList.remove("hidden-page");
+    if (element) {
+        element.textContent = value;
+    }
 }
 
 
-if (pages[page]) {
+function formatNumber(value) {
+    if (value === undefined || value === null) {
+        return "0";
+    }
 
-    document.getElementById("pageTitle").textContent =
-        pages[page].title;
-
-    document.getElementById("pageSubtitle").textContent =
-        pages[page].subtitle;
-
-}
-```
-
+    return Number(value).toLocaleString();
 }
 
-/* =========================================================
-CLOCK
-========================================================= */
+
+// ============================================================
+// CLOCK
+// ============================================================
 
 function updateClock() {
 
-```
-const now = new Date();
+    const clock = getElement("systemClock");
 
-
-const time = now.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-});
-
-
-const date = now.toLocaleDateString([], {
-    day: "2-digit",
-    month: "short",
-    year: "numeric"
-});
-
-
-const clock = document.getElementById("currentTime");
-
-if (clock) {
-    clock.textContent = date + " " + time;
-}
-```
-
-}
-
-/* =========================================================
-CONNECTION STATUS
-========================================================= */
-
-function setConnection(connected) {
-
-```
-const badge = document.getElementById("connectionStatus");
-
-if (!badge) {
-    return;
-}
-
-
-if (connected) {
-
-    badge.textContent = "Backend Connected";
-
-    badge.classList.remove("offline");
-
-    badge.classList.add("online");
-
-} else {
-
-    badge.textContent = "Backend Connecting...";
-
-    badge.classList.remove("online");
-
-    badge.classList.add("offline");
-
-}
-```
-
-}
-
-/* =========================================================
-STATUS UPDATE
-========================================================= */
-
-async function updateStatus() {
-
-```
-try {
-
-    const response = await fetch(STATUS_API);
-
-    if (!response.ok) {
-        throw new Error("Status API error");
-    }
-
-    const data = await response.json();
-
-
-    setConnection(true);
-
-
-    updateSystemHealth(data);
-
-    updateServers(data.servers || []);
-
-} catch (error) {
-
-    console.error("Backend connection error:", error);
-
-    setConnection(false);
-
-}
-```
-
-}
-
-/* =========================================================
-SYSTEM HEALTH
-========================================================= */
-
-function updateSystemHealth(data) {
-
-```
-const status = data.status || "Unknown";
-
-const statusElement =
-    document.getElementById("systemStatus");
-
-if (statusElement) {
-    statusElement.textContent = status;
-}
-
-
-const cpu = Number(data.cpu || 0);
-
-const cpuElement =
-    document.getElementById("cpuUsage");
-
-if (cpuElement) {
-    cpuElement.textContent = cpu.toFixed(1) + "%";
-}
-
-
-const servers = data.servers || [];
-
-const healthy =
-    servers.filter(function(server) {
-        return server.status === "Healthy";
-    }).length;
-
-const warning =
-    servers.filter(function(server) {
-        return server.status === "Warning";
-    }).length;
-
-const critical =
-    servers.filter(function(server) {
-        return server.status === "Critical";
-    }).length;
-
-
-const healthyElement =
-    document.getElementById("healthyServers");
-
-if (healthyElement) {
-    healthyElement.textContent = healthy;
-}
-
-
-const warningElement =
-    document.getElementById("warningServers");
-
-if (warningElement) {
-    warningElement.textContent = warning;
-}
-
-
-const criticalElement =
-    document.getElementById("criticalServers");
-
-if (criticalElement) {
-    criticalElement.textContent = critical;
-}
-
-
-const earlyWarning =
-    document.getElementById("earlyWarningStatus");
-
-if (earlyWarning) {
-
-    if (warning > 0) {
-
-        earlyWarning.textContent =
-            warning + " Warning";
-
-    } else {
-
-        earlyWarning.textContent =
-            "Monitoring Active";
-
-    }
-
-}
-```
-
-}
-
-/* =========================================================
-SERVER UPDATE
-========================================================= */
-
-function updateServers(servers) {
-
-```
-updateServerTable(servers);
-
-updateServerCards(servers);
-
-updateDashboardServers(servers);
-
-
-const online =
-    servers.filter(function(server) {
-        return server.status !== "Offline";
-    }).length;
-
-
-const serversOnline =
-    document.getElementById("serversOnline");
-
-if (serversOnline) {
-    serversOnline.textContent = online;
-}
-```
-
-}
-
-/* =========================================================
-STATUS CLASS
-========================================================= */
-
-function getStatusClass(status) {
-
-```
-if (status === "Healthy") {
-    return "healthy";
-}
-
-if (status === "Warning") {
-    return "warning";
-}
-
-if (status === "Critical") {
-    return "critical";
-}
-
-if (status === "Offline") {
-    return "offline";
-}
-
-return "unknown";
-```
-
-}
-
-/* =========================================================
-STATUS ICON
-========================================================= */
-
-function getStatusIcon(status) {
-
-```
-if (status === "Healthy") {
-    return "●";
-}
-
-if (status === "Warning") {
-    return "⚠";
-}
-
-if (status === "Critical") {
-    return "✕";
-}
-
-if (status === "Offline") {
-    return "○";
-}
-
-return "?";
-```
-
-}
-
-/* =========================================================
-DASHBOARD SERVER MINI LIST
-========================================================= */
-
-function updateDashboardServers(servers) {
-
-```
-const container =
-    document.getElementById("dashboardServerList");
-
-if (!container) {
-    return;
-}
-
-
-container.innerHTML = "";
-
-
-servers.forEach(function(server) {
-
-    const item = document.createElement("div");
-
-    item.className =
-        "dashboard-server-item " +
-        getStatusClass(server.status);
-
-
-    item.innerHTML =
-        "<div>" +
-            "<strong>" + server.name + "</strong>" +
-            "<span>Port " + server.port + "</span>" +
-        "</div>" +
-
-        "<div>" +
-            "<strong>" + getStatusIcon(server.status) + "</strong>" +
-            "<span>" + server.status + "</span>" +
-        "</div>";
-
-
-    container.appendChild(item);
-
-});
-```
-
-}
-
-/* =========================================================
-SERVER TABLE
-========================================================= */
-
-function updateServerTable(servers) {
-
-```
-const tableBody =
-    document.getElementById("serverTableBody");
-
-if (!tableBody) {
-    return;
-}
-
-
-tableBody.innerHTML = "";
-
-
-servers.forEach(function(server) {
-
-    const row = document.createElement("tr");
-
-
-    const score = Number(
-        server.score === undefined ? -1 : server.score
-    );
-
-
-    const trend = server.trend || {};
-
-
-    const statusClass =
-        getStatusClass(server.status);
-
-
-    row.innerHTML =
-        "<td>" +
-            "<strong>" + server.name + "</strong>" +
-        "</td>" +
-
-        "<td>" +
-            server.port +
-        "</td>" +
-
-        "<td>" +
-            "<span class='status-badge " +
-            statusClass +
-            "'>" +
-            getStatusIcon(server.status) +
-            " " +
-            server.status +
-            "</span>" +
-        "</td>" +
-
-        "<td>" +
-            Number(server.response_time || 0) +
-            " ms" +
-        "</td>" +
-
-        "<td>" +
-            Number(server.cpu || 0).toFixed(1) +
-            "%" +
-        "</td>" +
-
-        "<td>" +
-            Number(server.ram || 0).toFixed(1) +
-            "%" +
-        "</td>" +
-
-        "<td>" +
-            "<strong>" +
-            (score >= 0 ? score.toFixed(2) : "N/A") +
-            "</strong>" +
-        "</td>" +
-
-        "<td>" +
-            "<div>CPU: " +
-            getTrendDisplay(trend.cpu) +
-            "</div>" +
-
-            "<div>RAM: " +
-            getTrendDisplay(trend.ram) +
-            "</div>" +
-
-            "<div>Response: " +
-            getTrendDisplay(trend.response_time) +
-            "</div>" +
-
-        "</td>";
-
-
-    tableBody.appendChild(row);
-
-});
-```
-
-}
-
-/* =========================================================
-SERVER CARDS
-========================================================= */
-
-function updateServerCards(servers) {
-
-```
-const container =
-    document.getElementById("serverCards");
-
-if (!container) {
-    return;
-}
-
-
-container.innerHTML = "";
-
-
-servers.forEach(function(server) {
-
-    const card = document.createElement("div");
-
-    card.className =
-        "server-card " +
-        getStatusClass(server.status);
-
-
-    const warningMessages =
-        server.warning_messages || [];
-
-
-    let warningHTML = "";
-
-
-    if (warningMessages.length > 0) {
-
-        warningHTML =
-            "<div class='server-warning'>" +
-
-                "<strong>⚠ Early Warning</strong>" +
-
-                "<ul>";
-
-        warningMessages.forEach(function(message) {
-
-            warningHTML +=
-                "<li>" +
-                message +
-                "</li>";
-
-        });
-
-        warningHTML +=
-                "</ul>" +
-            "</div>";
-
-    }
-
-
-    const trend = server.trend || {};
-
-
-    card.innerHTML =
-
-        "<div class='server-card-header'>" +
-
-            "<div>" +
-
-                "<h3>" +
-                server.name +
-                "</h3>" +
-
-                "<p>Port " +
-                server.port +
-                "</p>" +
-
-            "</div>" +
-
-            "<span class='status-badge " +
-            getStatusClass(server.status) +
-            "'>" +
-
-                getStatusIcon(server.status) +
-                " " +
-                server.status +
-
-            "</span>" +
-
-        "</div>" +
-
-
-        warningHTML +
-
-
-        "<div class='server-score'>" +
-
-            "<span>Smart Score</span>" +
-
-            "<strong>" +
-
-                (
-                    Number(server.score) >= 0
-                    ? Number(server.score).toFixed(2)
-                    : "N/A"
-                ) +
-
-            "</strong>" +
-
-        "</div>" +
-
-
-        "<div class='server-metrics'>" +
-
-            "<div>" +
-                "<span>Response</span>" +
-                "<strong>" +
-                Number(server.response_time || 0) +
-                " ms</strong>" +
-            "</div>" +
-
-            "<div>" +
-                "<span>CPU</span>" +
-                "<strong>" +
-                Number(server.cpu || 0).toFixed(1) +
-                "%</strong>" +
-            "</div>" +
-
-            "<div>" +
-                "<span>Memory</span>" +
-                "<strong>" +
-                Number(server.ram || 0).toFixed(1) +
-                "%</strong>" +
-            "</div>" +
-
-        "</div>" +
-
-
-        "<div class='server-trends'>" +
-
-            "<div>" +
-                "<span>CPU Trend</span>" +
-                getTrendDisplay(trend.cpu) +
-            "</div>" +
-
-            "<div>" +
-                "<span>RAM Trend</span>" +
-                getTrendDisplay(trend.ram) +
-            "</div>" +
-
-            "<div>" +
-                "<span>Response Trend</span>" +
-                getTrendDisplay(trend.response_time) +
-            "</div>" +
-
-        "</div>";
-
-
-    container.appendChild(card);
-
-});
-```
-
-}
-
-/* =========================================================
-TREND DISPLAY
-========================================================= */
-
-function getTrendDisplay(trend) {
-
-```
-if (trend === "Rising") {
-
-    return "<span class='trend rising'>↑ Rising</span>";
-
-}
-
-if (trend === "Falling") {
-
-    return "<span class='trend falling'>↓ Falling</span>";
-
-}
-
-return "<span class='trend stable'>→ Stable</span>";
-```
-
-}
-
-/* =========================================================
-METRICS
-========================================================= */
-
-async function updateMetrics() {
-
-```
-try {
-
-    const response =
-        await fetch(METRICS_API);
-
-    if (!response.ok) {
-        throw new Error("Metrics API error");
-    }
-
-    const data =
-        await response.json();
-
-
-    const requests =
-        Number(data.requests_per_second || 0);
-
-
-    const active =
-        Number(data.active_requests || 0);
-
-
-    const success =
-        Number(data.success_rate || 0);
-
-
-    const requestElement =
-        document.getElementById("requestsPerSec");
-
-    if (requestElement) {
-        requestElement.textContent =
-            requests.toFixed(0);
-    }
-
-
-    const activeElement =
-        document.getElementById("activeRequests");
-
-    if (activeElement) {
-        activeElement.textContent =
-            active;
-    }
-
-
-    const successElement =
-        document.getElementById("successRate");
-
-    if (successElement) {
-
-        successElement.textContent =
-            success.toFixed(1) + "%";
-
-    }
-
-
-    updateChart(data);
-
-} catch (error) {
-
-    console.error(
-        "Metrics update error:",
-        error
-    );
-
-}
-```
-
-}
-
-/* =========================================================
-CHART
-========================================================= */
-
-function updateChart(data) {
-
-```
-const canvas =
-    document.getElementById("trafficChart");
-
-if (!canvas) {
-    return;
-}
-
-
-if (typeof Chart === "undefined") {
-
-    console.warn(
-        "Chart.js is not loaded."
-    );
-
-    return;
-
-}
-
-
-const labels =
-    data.labels || [];
-
-
-const values =
-    data.values || [];
-
-
-if (chart) {
-
-    chart.data.labels = labels;
-
-    chart.data.datasets[0].data =
-        values;
-
-    chart.update();
-
-    return;
-
-}
-
-
-chart = new Chart(canvas, {
-
-    type: "line",
-
-    data: {
-
-        labels: labels,
-
-        datasets: [
-
-            {
-
-                label: "Requests/sec",
-
-                data: values,
-
-                tension: 0.3,
-
-                fill: true
-
-            }
-
-        ]
-
-    },
-
-    options: {
-
-        responsive: true,
-
-        maintainAspectRatio: false,
-
-        plugins: {
-
-            legend: {
-                display: true
-            }
-
-        },
-
-        scales: {
-
-            y: {
-                beginAtZero: true
-            }
-
-        }
-
-    }
-
-});
-```
-
-}
-
-/* =========================================================
-LOGS
-========================================================= */
-
-async function updateLogs() {
-
-```
-try {
-
-    const response =
-        await fetch(LOGS_API);
-
-    if (!response.ok) {
-        throw new Error("Logs API error");
-    }
-
-    const data =
-        await response.json();
-
-
-    const logs =
-        data.logs || [];
-
-
-    const container =
-        document.getElementById("logsContainer");
-
-    if (!container) {
+    if (!clock) {
         return;
     }
 
+    const now = new Date();
 
-    container.innerHTML = "";
-
-
-    logs.slice().reverse().forEach(function(log) {
-
-        const item =
-            document.createElement("div");
-
-        item.className = "log-item";
+    clock.textContent = now.toLocaleString();
+}
 
 
-        const time =
-            log.timestamp || log.time || "";
+setInterval(updateClock, 1000);
+updateClock();
 
 
-        const server =
-            log.server || "Unknown";
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
 
+function showPage(page) {
 
-        const status =
-            log.status || "Success";
+    document.querySelectorAll(".page").forEach(function(element) {
 
-
-        const responseTime =
-            log.response_time === undefined
-            ? ""
-            : log.response_time + " ms";
-
-
-        item.innerHTML =
-
-            "<div>" +
-
-                "<strong>" +
-                server +
-                "</strong>" +
-
-                "<span>" +
-                status +
-                "</span>" +
-
-            "</div>" +
-
-            "<div>" +
-
-                "<small>" +
-                time +
-                "</small>" +
-
-                "<small>" +
-                responseTime +
-                "</small>" +
-
-            "</div>";
-
-
-        container.appendChild(item);
+        element.classList.remove("active");
 
     });
 
 
-} catch (error) {
+    const selectedPage = getElement(page);
 
-    console.error(
-        "Logs update error:",
-        error
+    if (selectedPage) {
+        selectedPage.classList.add("active");
+    }
+
+
+    document.querySelectorAll(".nav-item").forEach(function(item) {
+
+        item.classList.remove("active");
+
+    });
+
+
+    document.querySelectorAll(".nav-item").forEach(function(item) {
+
+        if (item.getAttribute("data-page") === page) {
+            item.classList.add("active");
+        }
+
+    });
+}
+
+
+document.querySelectorAll(".nav-item").forEach(function(item) {
+
+    item.addEventListener("click", function() {
+
+        const page = item.getAttribute("data-page");
+
+        if (page) {
+            showPage(page);
+        }
+
+    });
+
+});
+
+
+// ============================================================
+// CONNECTION STATUS
+// ============================================================
+
+function setConnectionStatus(connected) {
+
+    const statusElement = getElement("connectionStatus");
+
+    if (!statusElement) {
+        return;
+    }
+
+    if (connected) {
+
+        statusElement.textContent = "● Connected";
+
+        statusElement.classList.remove("offline");
+        statusElement.classList.add("online");
+
+    } else {
+
+        statusElement.textContent = "● Backend Connecting";
+
+        statusElement.classList.remove("online");
+        statusElement.classList.add("offline");
+
+    }
+}
+
+
+// ============================================================
+// FETCH STATUS
+// ============================================================
+
+async function updateStatus() {
+
+    try {
+
+        const response = await fetch(STATUS_API);
+
+        if (!response.ok) {
+            throw new Error("Status request failed");
+        }
+
+        const data = await response.json();
+
+        setConnectionStatus(true);
+
+        updateDashboard(data);
+
+    } catch (error) {
+
+        console.error("Status API error:", error);
+
+        setConnectionStatus(false);
+
+    }
+}
+
+
+// ============================================================
+// UPDATE DASHBOARD
+// ============================================================
+
+function updateDashboard(data) {
+
+    if (!data) {
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // SERVER COUNTS
+    // --------------------------------------------------------
+
+    if (data.servers) {
+
+        setText(
+            "totalServers",
+            data.servers.total
+        );
+
+        setText(
+            "healthyServers",
+            data.servers.healthy
+        );
+
+        setText(
+            "warningServers",
+            data.servers.warning
+        );
+
+        setText(
+            "offlineServers",
+            data.servers.offline
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // SYSTEM
+    // --------------------------------------------------------
+
+    if (data.system) {
+
+        setText(
+            "systemCPU",
+            data.system.cpu + "%"
+        );
+
+        setText(
+            "systemMemory",
+            data.system.memory + "%"
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // REQUESTS
+    // --------------------------------------------------------
+
+    setText(
+        "totalRequests",
+        formatNumber(data.total_requests)
     );
 
-}
-```
 
+    setText(
+        "successfulRequests",
+        formatNumber(data.successful_requests)
+    );
+
+
+    setText(
+        "failedRequests",
+        formatNumber(data.failed_requests)
+    );
+
+
+    // --------------------------------------------------------
+    // SERVER TABLE
+    // --------------------------------------------------------
+
+    updateServerTable(data.server_list);
+
+    // --------------------------------------------------------
+    // SERVER CARDS
+    // --------------------------------------------------------
+
+    updateServerCards(data.server_list);
 }
 
-/* =========================================================
-TEST REQUEST
-========================================================= */
+
+// ============================================================
+// SERVER TABLE
+// ============================================================
+
+function updateServerTable(servers) {
+
+    const tableBody = getElement("serverTableBody");
+
+    if (!tableBody || !servers) {
+        return;
+    }
+
+    tableBody.innerHTML = "";
+
+
+    servers.forEach(function(server) {
+
+        const row = document.createElement("tr");
+
+        const statusClass =
+            String(server.status).toLowerCase();
+
+
+        row.innerHTML =
+            "<td>" +
+                server.name +
+            "</td>" +
+
+            "<td>" +
+                server.port +
+            "</td>" +
+
+            "<td>" +
+                "<span class='status " +
+                statusClass +
+                "'>" +
+                server.status +
+                "</span>" +
+            "</td>" +
+
+            "<td>" +
+                server.response_time +
+                " ms" +
+            "</td>" +
+
+            "<td>" +
+                server.cpu +
+                "%" +
+            "</td>" +
+
+            "<td>" +
+                server.memory +
+                "%" +
+            "</td>" +
+
+            "<td>" +
+                server.score +
+            "</td>" +
+
+            "<td>" +
+                server.trend +
+            "</td>";
+
+
+        tableBody.appendChild(row);
+
+    });
+}
+
+
+// ============================================================
+// SERVER CARDS
+// ============================================================
+
+function updateServerCards(servers) {
+
+    const container = getElement("serverCards");
+
+    if (!container || !servers) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+
+    servers.forEach(function(server) {
+
+        const card = document.createElement("div");
+
+        card.className = "server-card";
+
+
+        card.innerHTML =
+
+            "<div class='server-card-header'>" +
+
+                "<div>" +
+                    "<h3>" +
+                        server.name +
+                    "</h3>" +
+
+                    "<p>" +
+                        "Port " +
+                        server.port +
+                    "</p>" +
+                "</div>" +
+
+                "<span class='status " +
+                    String(server.status).toLowerCase() +
+                "'>" +
+                    server.status +
+                "</span>" +
+
+            "</div>" +
+
+
+            "<div class='server-card-stats'>" +
+
+                "<div>" +
+                    "<span>Response</span>" +
+                    "<strong>" +
+                        server.response_time +
+                        " ms" +
+                    "</strong>" +
+                "</div>" +
+
+                "<div>" +
+                    "<span>CPU</span>" +
+                    "<strong>" +
+                        server.cpu +
+                        "%" +
+                    "</strong>" +
+                "</div>" +
+
+                "<div>" +
+                    "<span>Memory</span>" +
+                    "<strong>" +
+                        server.memory +
+                        "%" +
+                    "</strong>" +
+                "</div>" +
+
+                "<div>" +
+                    "<span>Score</span>" +
+                    "<strong>" +
+                        server.score +
+                    "</strong>" +
+                "</div>" +
+
+            "</div>";
+
+
+        container.appendChild(card);
+
+    });
+}
+
+
+// ============================================================
+// METRICS
+// ============================================================
+
+async function updateMetrics() {
+
+    try {
+
+        const response = await fetch(METRICS_API);
+
+        if (!response.ok) {
+            throw new Error("Metrics request failed");
+        }
+
+        const data = await response.json();
+
+
+        setText(
+            "requestsPerSec",
+            data.requests_per_sec
+        );
+
+
+        setText(
+            "activeRequests",
+            data.active_requests
+        );
+
+
+        setText(
+            "successRate",
+            data.success_rate + "%"
+        );
+
+
+        setText(
+            "averageResponse",
+            data.average_response_time + " ms"
+        );
+
+
+        setText(
+            "totalRequests",
+            formatNumber(data.total_requests)
+        );
+
+
+        setText(
+            "successfulRequests",
+            formatNumber(data.successful_requests)
+        );
+
+
+        setText(
+            "failedRequests",
+            formatNumber(data.failed_requests)
+        );
+
+
+        if (data.servers) {
+            updateServerCards(data.servers);
+        }
+
+
+        updateChart(data.servers);
+
+    } catch (error) {
+
+        console.error("Metrics API error:", error);
+
+    }
+}
+
+
+// ============================================================
+// LOGS
+// ============================================================
+
+async function updateLogs() {
+
+    try {
+
+        const response = await fetch(LOGS_API);
+
+        if (!response.ok) {
+            throw new Error("Logs request failed");
+        }
+
+        const data = await response.json();
+
+        const logsContainer = getElement("logsContainer");
+
+        if (!logsContainer || !data.logs) {
+            return;
+        }
+
+        logsContainer.innerHTML = "";
+
+
+        data.logs.forEach(function(log) {
+
+            const item = document.createElement("div");
+
+            item.className = "log-item";
+
+
+            item.innerHTML =
+
+                "<span class='log-time'>" +
+                    log.time +
+                "</span>" +
+
+                "<span class='log-level " +
+                    String(log.level).toLowerCase() +
+                "'>" +
+                    log.level +
+                "</span>" +
+
+                "<span class='log-message'>" +
+                    log.message +
+                "</span>";
+
+
+            logsContainer.appendChild(item);
+
+        });
+
+    } catch (error) {
+
+        console.error("Logs API error:", error);
+
+    }
+}
+
+
+// ============================================================
+// WARNINGS
+// ============================================================
+
+async function updateWarnings() {
+
+    try {
+
+        const response = await fetch(WARNINGS_API);
+
+        if (!response.ok) {
+            throw new Error("Warnings request failed");
+        }
+
+        const data = await response.json();
+
+        const container = getElement("warningsContainer");
+
+        if (!container) {
+            return;
+        }
+
+        container.innerHTML = "";
+
+
+        if (!data.warnings || data.warnings.length === 0) {
+
+            container.innerHTML =
+                "<div class='no-warning'>" +
+                "✓ No active warnings" +
+                "</div>";
+
+            return;
+        }
+
+
+        data.warnings.forEach(function(warning) {
+
+            const item = document.createElement("div");
+
+            item.className = "warning-item";
+
+
+            item.innerHTML =
+
+                "<strong>" +
+                    warning.server +
+                "</strong>" +
+
+                "<span>" +
+                    warning.message +
+                "</span>";
+
+
+            container.appendChild(item);
+
+        });
+
+    } catch (error) {
+
+        console.error("Warnings API error:", error);
+
+    }
+}
+
+
+// ============================================================
+// CHART
+// ============================================================
+
+function updateChart(servers) {
+
+    const canvas = getElement("performanceChart");
+
+    if (!canvas || !servers) {
+        return;
+    }
+
+
+    if (typeof Chart === "undefined") {
+        return;
+    }
+
+
+    const labels = [];
+    const scores = [];
+
+
+    servers.forEach(function(server) {
+
+        labels.push(server.name);
+        scores.push(server.score);
+
+    });
+
+
+    if (chart) {
+
+        chart.data.labels = labels;
+
+        chart.data.datasets[0].data = scores;
+
+        chart.update();
+
+        return;
+    }
+
+
+    chart = new Chart(
+        canvas,
+        {
+            type: "bar",
+
+            data: {
+
+                labels: labels,
+
+                datasets: [
+                    {
+                        label: "Server Score",
+                        data: scores
+                    }
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                scales: {
+
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+
+                }
+
+            }
+
+        }
+    );
+}
+
+
+// ============================================================
+// TEST REQUEST
+// ============================================================
 
 async function sendTestRequest() {
 
-```
-try {
+    try {
 
-    const response =
-        await fetch(PROXY_API);
+        const response = await fetch(PROXY_API);
 
+        const data = await response.json();
 
-    const data =
-        await response.json();
+        console.log("Test request:", data);
 
+        updateStatus();
+        updateMetrics();
+        updateLogs();
 
-    console.log(
-        "Test request response:",
-        data
-    );
+        alert(
+            "Request routed to " +
+            data.routed_to
+        );
 
+    } catch (error) {
 
-    await updateStatus();
+        console.error(
+            "Test request failed:",
+            error
+        );
 
-    await updateMetrics();
-
-    await updateLogs();
-
-
-    alert(
-        "Request successfully processed by " +
-        (data.routed_to || "backend server")
-    );
-
-
-} catch (error) {
-
-    console.error(
-        "Test request failed:",
-        error
-    );
-
-
-    alert(
-        "Test request failed. " +
-        "Make sure FlexiProxy backend is running."
-    );
-
-}
-```
-
-}
-
-/* =========================================================
-LIVE TRAFFIC
-========================================================= */
-
-function startLiveTraffic() {
-
-```
-if (trafficRunning) {
-    return;
+        alert(
+            "FlexiProxy backend is not connected."
+        );
+    }
 }
 
 
-trafficRunning = true;
+// ============================================================
+// LIVE TRAFFIC
+// ============================================================
 
+async function generateTraffic() {
 
-const button =
-    document.getElementById("liveTrafficButton");
+    try {
 
-if (button) {
+        const response = await fetch(PROXY_API);
 
-    button.textContent =
-        "Stop Live Traffic";
+        const data = await response.json();
 
+        console.log(
+            "Live traffic request:",
+            data
+        );
+
+        updateStatus();
+        updateMetrics();
+        updateLogs();
+
+    } catch (error) {
+
+        console.error(
+            "Live traffic error:",
+            error
+        );
+
+    }
 }
 
-
-trafficInterval =
-    setInterval(async function() {
-
-        try {
-
-            await fetch(PROXY_API);
-
-            await updateStatus();
-
-            await updateMetrics();
-
-            await updateLogs();
-
-        } catch (error) {
-
-            console.error(
-                "Live traffic error:",
-                error
-            );
-
-        }
-
-    }, 1000);
-```
-
-}
-
-/* =========================================================
-STOP LIVE TRAFFIC
-========================================================= */
-
-function stopLiveTraffic() {
-
-```
-trafficRunning = false;
-
-
-if (trafficInterval) {
-
-    clearInterval(trafficInterval);
-
-    trafficInterval = null;
-
-}
-
-
-const button =
-    document.getElementById("liveTrafficButton");
-
-if (button) {
-
-    button.textContent =
-        "Start Live Traffic";
-
-}
-```
-
-}
-
-/* =========================================================
-TOGGLE LIVE TRAFFIC
-========================================================= */
 
 function toggleLiveTraffic() {
 
-```
-if (trafficRunning) {
+    const button = getElement("liveTrafficButton");
 
-    stopLiveTraffic();
+    liveTraffic = !liveTraffic;
 
-} else {
 
-    startLiveTraffic();
+    if (liveTraffic) {
 
+        if (button) {
+            button.textContent = "Stop Live Traffic";
+        }
+
+        generateTraffic();
+
+        trafficTimer = setInterval(
+            generateTraffic,
+            1000
+        );
+
+    } else {
+
+        if (button) {
+            button.textContent = "Start Live Traffic";
+        }
+
+        clearInterval(trafficTimer);
+
+        trafficTimer = null;
+    }
 }
-```
-
-}
-
-/* =========================================================
-INITIALIZATION
-========================================================= */
-
-document.addEventListener("DOMContentLoaded", function() {
-
-```
-updateClock();
-
-setInterval(updateClock, 1000);
 
 
-updateStatus();
+// ============================================================
+// BUTTONS
+// ============================================================
 
-updateMetrics();
-
-updateLogs();
-
-
-setInterval(updateStatus, 3000);
-
-setInterval(updateMetrics, 3000);
-
-setInterval(updateLogs, 5000);
-
-
-const testButton =
-    document.getElementById("testRequestButton");
+const testButton = getElement(
+    "testRequestButton"
+);
 
 if (testButton) {
 
@@ -1198,8 +832,9 @@ if (testButton) {
 }
 
 
-const liveButton =
-    document.getElementById("liveTrafficButton");
+const liveButton = getElement(
+    "liveTrafficButton"
+);
 
 if (liveButton) {
 
@@ -1209,6 +844,57 @@ if (liveButton) {
     );
 
 }
-```
 
-});
+
+// ============================================================
+// INITIAL LOAD
+// ============================================================
+
+async function initializeDashboard() {
+
+    console.log(
+        "FlexiProxy dashboard starting..."
+    );
+
+
+    await updateStatus();
+
+    await updateMetrics();
+
+    await updateLogs();
+
+    await updateWarnings();
+
+
+    console.log(
+        "FlexiProxy dashboard initialized."
+    );
+}
+
+
+initializeDashboard();
+
+
+// ============================================================
+// AUTO REFRESH
+// ============================================================
+
+setInterval(
+    updateStatus,
+    3000
+);
+
+setInterval(
+    updateMetrics,
+    3000
+);
+
+setInterval(
+    updateLogs,
+    3000
+);
+
+setInterval(
+    updateWarnings,
+    5000
+);
